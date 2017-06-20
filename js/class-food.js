@@ -1,9 +1,10 @@
 /**
  * 食物类型
  */
+
 (function (root, factory) {
-  root.Food = factory(root)
-}(this, function (window) {
+  root.Food = factory(root, root.Point, root.GameObject)
+}(this, function (window, Point, GameObject) {
   /**
    * 食物类型
    * @param {Number} x    第几列
@@ -27,7 +28,7 @@
   Food.randomGenerate = function (width, height) {
     var x = Math.floor(Math.random() * width)
     var y = Math.floor(Math.random() * height)
-    var types = ['primary', 'success', 'info', 'warning', 'danger']
+    var types = ['success', 'info', 'warning', 'danger']
     var type = types[Math.floor(Math.random() * types.length)]
     return new Food(x, y, type)
   }

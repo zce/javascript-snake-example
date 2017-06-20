@@ -1,9 +1,10 @@
 /**
  * 矩阵中的点类型
  */
+
 (function (root, factory) {
-  root.Point = factory(root)
-}(this, function (window) {
+  root.Point = factory()
+}(this, function () {
   /**
    * 矩阵中的点类型
    * @param {Number} x    第几列

@@ -1,9 +1,10 @@
 /**
  * 游戏场景类型
  */
+
 (function (root, factory) {
-  root.GameScene = factory(root)
-}(this, function (window) {
+  root.GameScene = factory(root, root.Snake, root.Food)
+}(this, function (window, Snake, Food) {
   var self
 
   /**
@@ -41,6 +42,12 @@
      */
     self.objects = []
 
+    /**
+     * 是否游戏结束
+     * @type {Boolean}
+     */
+    self.isGameover = false
+
     _init()
   }
 
@@ -58,10 +65,9 @@
    * 初始化场景
    */
   function _initScene () {
-    // 初始化游戏场景需要的样式
-    var cssText = 'table { border-collapse: collapse }\n' +
+    // ---------- 初始化游戏场景需要的样式 ----------
+    var cssText = 'table { float: left; border-collapse: collapse }\n' +
                   'td { padding: 5px; overflow: hidden; border: 1px dashed #f0f0f0 }\n' +
-                  '.primary { background-color: #0275d8 }\n' +
                   '.success { background-color: #5cb85c }\n' +
                   '.info { background-color: #5bc0de }\n' +
                   '.warning { background-color: #f0ad4e }\n' +
@@ -72,7 +78,7 @@
     style.innerHTML = cssText
     self.element.appendChild(style)
 
-    // 初始化游戏场景画布
+    // ---------- 初始化游戏场景画布 ----------
     var table = document.createElement('table')
     for (var y = 0; y < self.width; y++) {
       var tr = document.createElement('tr')
@@ -85,6 +91,30 @@
       table.appendChild(tr)
     }
     self.element.appendChild(table)
+
+    // ---------- 初始化图例说明 ----------
+    var intro = document.createElement('table')
+    intro.style.margin = '50px'
+    var types = {
+      success: '加强食物 +2',
+      info: '正常食物 +1',
+      warning: '中毒 -1',
+      danger: '障碍物',
+      inverse: '蛇头',
+      default: '蛇身'
+    }
+    Object.keys(types).forEach(function (type) {
+      var td1 = document.createElement('td')
+      td1.className = type
+      td1.width = 22
+      var td2 = document.createElement('td')
+      td2.innerHTML = types[type]
+      var tr = document.createElement('tr')
+      tr.appendChild(td1)
+      tr.appendChild(td2)
+      intro.appendChild(tr)
+    })
+    self.element.appendChild(intro)
   }
 
   /**
@@ -92,16 +122,21 @@
    */
   function _initObjects () {
     // 玩家蛇
-    var player = new Snake(10, 10)
+    var player = new Snake(10, 10).start({ scene: self })
     self.objects.push(player)
     // 食物
-    var food = Food.randomGenerate(self.width, self.height)
+    var food = Food.randomGenerate(self.width, self.height).start({ scene: self })
     self.objects.push(food)
   }
 
   var startTimestamp
   var lastTimestamp
   function _frame (timestamp) {
+    // 游戏是否结束
+    if (self.isGameover) {
+      return window.alert('GAME OVER')
+    }
+
     // 忽略程序启动到第一帧之间的时间差
     startTimestamp = startTimestamp || timestamp
     timestamp = timestamp - startTimestamp
@@ -135,100 +170,3 @@
 
   return GameScene
 }))
-
-// /**
-//  * 游戏场景
-//  * @param {HTMLElement} container 容器
-//  */
-// var GameScene = (function () {
-//   var startTimestamp
-//   var lastTimestamp
-
-//   /**
-//    * 初始化游戏场景所需画布（table）
-//    * @param  {Number} size 画布尺寸（建议 50-150 之间）
-//    * @return {HTMLElement} 游戏场景所需画布（table）
-//    */
-//   function initTable (size) {
-//     var cssText = 'table { border-collapse: collapse }' +
-//                   'td { padding: 5px; overflow: hidden; border: 1px dashed #f0f0f0 }' +
-//                   '.primary { background-color: #0275d8 }' +
-//                   '.success { background-color: #5cb85c }' +
-//                   '.info { background-color: #5bc0de }' +
-//                   '.warning { background-color: #f0ad4e }' +
-//                   '.danger { background-color: #d9534f }' +
-//                   '.inverse { background-color: #292b2c }' +
-//                   '.default { background-color: #838c92 }'
-
-//     // 初始化游戏场景需要的样式
-//     var style = document.createElement('style')
-//     style.innerHTML = cssText
-//     document.head.append(style)
-
-//     // 初始化游戏场景画布
-//     var table = document.createElement('table')
-//     for (var y = 0; y < size; y++) {
-//       var tr = document.createElement('tr')
-//       for (var x = 0; x < size; x++) {
-//         var td = document.createElement('td')
-//         tr.appendChild(td)
-//       }
-//       table.appendChild(tr)
-//     }
-
-//     // 返回画布
-//     return table
-//   }
-
-//   function frame (timestamp) {
-//     startTimestamp = startTimestamp || timestamp
-//     timestamp = timestamp - startTimestamp
-
-//     var timespan = timestamp - (lastTimestamp || 0)
-//     lastTimestamp = timestamp
-
-//     // log FPS
-//     this.fps = `${(1000 / timespan).toFixed(2)} FPS`
-
-//     var _this = this
-//     this.objects.forEach(function (obj) {
-//       obj.update && obj.update(timespan, _this.currentKeyCode)
-//       obj.render && obj.render(_this.table)
-//     })
-
-//     window.requestAnimationFrame(frame.bind(this))
-//   }
-
-//   function GameScene (container, size) {
-//     size = size || 80
-
-//     // 记录成员
-//     this.container = container
-//     this.table = initTable(size)
-
-//     // 将画布放置到游戏容器中
-//     this.container.appendChild(this.table)
-
-//     // 初始化玩家蛇
-//     var player = new Snake({ x: 10, y: 10 }, 4)
-
-//     window.player = player
-
-//     // 创建一个食物
-//     var food = Food.randomGenerate({ x:0, y: 0 }, { x:size, y: size })
-
-//     // 初始化游戏对象集合（玩家蛇和目标事物都是游戏对象）
-//     this.objects = []
-//     this.objects.push(player)
-//     this.objects.push(food)
-//   }
-
-//   GameScene.prototype.bootstrap = function () {
-//     window.addEventListener('keydown', function (e) {
-//       this.currentKeyCode = e.keyCode
-//     }.bind(this))
-//     window.requestAnimationFrame(frame.bind(this))
-//   }
-
-//   return GameScene
-// }())
